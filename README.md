@@ -35,7 +35,7 @@ MLD library must know the information about all structures being used by the app
    unsigned int offset;
    data_type_t dtype;
    char nested_str_name[MAX_STRUCTURE_NAME_SIZE];
- }field_infor_t;
+ }field_info_t;
  ```
 
  ```
@@ -44,12 +44,12 @@ MLD library must know the information about all structures being used by the app
 
  typedef struct _struct_db_rec_ struct_db_rec_t;
 
- struct _struct_db_rec_struct_db_rec_{
+ struct _struct_db_rec_ struct_db_rec_t{
    struct_db_rec_t *next;
    char struct_name[MAX_STRUCTURE_NAME_SIZE]; \\Key
    unsigned int ds_size;
    unsigned int n_fields;
-   field_infor_t *fields;
+   field_info_t *fields;
  };
 ```  
 
