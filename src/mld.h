@@ -18,13 +18,14 @@ typedef enum{
 }data_type_t;
 
 #define OFFSETOF(struct_name, fld_name) \
-        (unsigned int)&(((struct_name*)0)->fld_name)
+        (unsigned int)&(((struct_name*)0)->fld_name)   /* NULL pointer of type struct_name */
 
 #define FIELD_SIZE(struct_name, fld_name) \
-        sizeof(((struct_name*)0)->fld_name)
+        sizeof(((struct_name*)0)->fld_name)            /* NULL pointer of type struct_name */
 
 typedef struct _struct_db_rec_t struct_db_rec_t;
 
+/* structure database */
 typedef struct _field_info_{
   char fname[MAX_FIELD_NAME_SIZE];
   data_type_t dtype;
@@ -49,6 +50,7 @@ typedef struct _struct_db_{
   unsigned int count;
 }struct_db_t;
 
+/* APIs declaration */
 void
 print_structure_rec(struct_db_rec_t*);
 void
@@ -57,7 +59,7 @@ int
 add_structure_to_struct_db(struct_db_t*, struct_db_rec_t*);
 
 /*Structure registration helping APIs */
-#define FIELD_INFO(struct_name, fld_name, dtype, nested_str_name)  \
+#define FIELD_INFO(struct_name, fld_name, dtype, nested_str_name)     \
   {#fld_name, dtype, FIELD_SIZE(struct_name, fld_name),               \
     OFFSETOF(struct_name, fld_name), #nested_str_name}
 
@@ -72,4 +74,26 @@ add_structure_to_struct_db(struct_db_t*, struct_db_rec_t*);
       assert(0);                                                      \
     }                                                                 \
   } while(0);
+
+/* Object database */
+typedef struct _object_db_rec_ object_db_rec_t;
+struct _object_db_rec_{
+  object_db_rec_t *next;
+  void *ptr;
+  unsigned int units;
+  struct_db_rec_t *struct_rec;
+};
+typedef struct _object_db_{
+  struct_db_t *struct_db;
+  object_db_rec_t *head;
+  unsigned int count;
+}object_db_t;
+
+/* APIs declaration */
+void
+print_object_rec(object_db_rec_t*, int);
+void
+print_object_db(object_db_t*);
+void*
+xcalloc(object_db_t *, char*, int);
 #endif

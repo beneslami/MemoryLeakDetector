@@ -44,5 +44,15 @@ main(int argc, char **argv){
   REG_STRUCT(struct_db, student_t, std_fields);
 
   print_structure_db(struct_db);
+
+  /* initialize a new object database */
+  object_db_t *object_db = calloc(1, sizeof(object_db_t));
+  object_db->struct_db = struct_db;
+
+  student_t *ben = xcalloc(object_db, "student_t", 1);
+  student_t *eslami = xcalloc(object_db, "student_t", 1);
+  student_t *pramod = xcalloc(object_db, "emp_t", 2);
+
+  print_object_db(object_db);
   return 0;
 }
