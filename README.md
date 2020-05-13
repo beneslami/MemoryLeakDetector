@@ -143,3 +143,17 @@ student_t *beny = xcalloc(object_dbm "student_t", 1);
 The snapshot of object_db_t is like below:
 
 ![picture](data/obj_db.png)
+
+### Phase 3
+
+The purpose of MLD library is to process object database, with the help of structure database, and find leaked application objects and report them. So, we need to implement memory leak detection algorithm in MLD library to accomplish this goal.
+
+The entire essence of this project is as below:
+
+![picture](data/essence.png)
+
+Any application Data Structure eventually takes the shape of **Disjoint set of Graphs**. Leaked object are thos objects which are not reachable from any other objects. Finding a set of leaked object is a graph problem. Given a graph of nodes(objects) and edges(references from one object to another object), find all the nodes which are not reachable from any other nodes. Application objects have references to one another, overall, all application objects combined take the shape of a graph. The graph can be Disjoint, it means that application data structures can be represented as a set of isolated graphs. Each isolated individual graph has a special node called **root** of the graph. Application data structure always takes the shape of disjoint set of graphs. Below picture will illustrate leaked and reachable object:
+
+![picture](data/graph.png)
+
+Above sub-graphs (disjoint graph) represent application data structure relationship. Root of the graph is a node that allows us to meet the rest of the node by start traversing from it. Root objects are usually global or static objects. Every other malloc'd objects must be reachable form at least one root object. Note that, at any point of time, the overall data structure is **Directed Cyclic Graph**.
