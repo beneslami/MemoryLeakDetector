@@ -156,4 +156,38 @@ Any application Data Structure eventually takes the shape of **Disjoint set of G
 
 ![picture](data/graph.png)
 
-Above sub-graphs (disjoint graph) represent application data structure relationship. Root of the graph is a node that allows us to meet the rest of the node by start traversing from it. Root objects are usually global or static objects. Every other malloc'd objects must be reachable form at least one root object. Note that, at any point of time, the overall data structure is **Directed Cyclic Graph**.
+Above sub-graphs (disjoint graph) represent application data structure relationship. Root of the graph is a node that allows us to meet the rest of the node by start traversing from it. Root objects are usually global or static objects. Every other malloc'd objects must be reachable form at least one root object. Note that, at any point of time, the overall data structure is **Directed Cyclic Graph**. At this point, the question is how MLD algorithm detects root objects? the application has to tell MLD library the set of all root objects. So, MLD library must provide an API using which an application can register its root objects. Application can create root objects in two ways:
+1. Simply creating a global root object out of main function. The API which the application should register its root object is as below:
+```
+void mld_register_global_object_as_root(object_db_t *object_db, void *objptr,
+char *struct_name, unsigned int units);
+```
+The objective of this function is to create a new object db record entry in object db of MLD library and mark it as root.
+2. Using dynamic object creation but after that, the application should search to find the object in object_db and mark it as a root.
+```
+mld_set_dynamic_object_as_root(object_db_t *object_db, void *obj_ptr);
+```
+The MLD algorithm begins from root objects. And in most cases, global objects are also the root objects. Global objects are referenced by global variables in application, so, global objects cannot be leaked. Our MLD library assumes dynamic root objects of the application are also never leaked by the application. If dynamic root objects are leaked by the application, the MLD algorithm will not report it since it starts memory leak detection algorithm from root object assuming root objects are always reachable. And it makes sense, you want to start your journey and you need to traverse 100 stations starting from station 1 where you already present. It is not possible that you won't reach station 1 starting from station 1 (paradox!).
+
+To explain the algorithm, consider below picture. The graph has two root object. First step in MLD algorithm is to set is_visited variable to zero.
+
+![picture](data/graph_algorithm.png)
+
+MLD algorithm always starts with root object and no matter which one. So, the algorithm scans the object database and check which objects are root (checkpoint).
+
+![picture](data/algorithm1.png)
+
+Once, the algorithm visits each node, it toggles its is_visited variable. This is also true for root objects. Then it moves from current object to its child by its ```next``` pointer.
+
+![picture](data/algorithm2.png)
+
+After reaching the end of the string, the algorithm moves forward with checkpoint and try to find another root and start toggling is_visited variable for each node it sees.
+
+![picture](data/algorithm3.png)
+
+At the end, when the algorithm finishes probing is_root, any object with is_visited variable remained zero is leaked object.  
+
+Some Analysis:
+1. MLD algorithm is recursive.
+2. MLD algorithm is basically DFS algorithm. So basically, MLD algorithm is nothing but DFS.
+3. is_visited flag is used to avoid loops. 
