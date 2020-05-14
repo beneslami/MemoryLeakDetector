@@ -17,6 +17,11 @@ typedef enum{
   OBJ_STRUCT
 }data_type_t;
 
+typedef enum{
+  MLD_FALSE,
+  MLD_TRUE
+}mld_boolean_t;
+
 #define OFFSETOF(struct_name, fld_name) \
         (unsigned int)&(((struct_name*)0)->fld_name)   /* NULL pointer of type struct_name */
 
@@ -82,6 +87,8 @@ struct _object_db_rec_{
   void *ptr;
   unsigned int units;
   struct_db_rec_t *struct_rec;
+  mld_boolean_t is_root; /* Is this object root or not */
+  mld_boolean_t is_visited; /* used for Graph traversal */
 };
 typedef struct _object_db_{
   struct_db_t *struct_db;
@@ -96,4 +103,14 @@ void
 print_object_db(object_db_t*);
 void*
 xcalloc(object_db_t *, char*, int);
+
+void
+mld_register_global_object_as_root(object_db_t*, void*, char*, unsigned int);
+void
+mld_register_global_object_as_root(object_db_t*, void*,char*, unsigned int);
+void
+run_mld_algorithm(object_db_t*);
+void
+report_leaked_objects(object_db_t*);
+
 #endif
