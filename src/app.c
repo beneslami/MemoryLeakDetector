@@ -53,6 +53,6 @@ main(int argc, char **argv){
   student_t *eslami = xcalloc(object_db, "student_t", 1);
   student_t *pramod = xcalloc(object_db, "emp_t", 2);
 
-  print_object_db(object_db);
+  print_structure_db(struct_db);
   return 0;
 }
