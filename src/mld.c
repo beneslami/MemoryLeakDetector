@@ -133,7 +133,7 @@ xcalloc(object_db_t *object_db, char *struct_name, int units){
   struct_db_rec_t *struct_rec = struct_db_look_up(object_db->struct_db, struct_name);
   assert(struct_rec);
   void *ptr = calloc(units, struct_rec->ds_size);
-  add_object_to_object_db(object_db, ptr, units, struct_rec);
+  add_object_to_object_db(object_db, ptr, units, struct_rec, MLD_FALSE);
   return ptr;
 }
 
@@ -178,7 +178,7 @@ init_mld_algorithm(object_db_t *object_db){
 }
 
 static void
-mld_explore_objects_recursively(object_db_t *object_db, object_db_rec_t *object_db_rec){
+mld_explore_objects_recursively(object_db_t *object_db, object_db_rec_t *parent_obj_rec){
   unsigned int i, n_fields;
   char *parent_obj_ptr = NULL,
        *child_obj_offset = NULL;
@@ -192,7 +192,7 @@ mld_explore_objects_recursively(object_db_t *object_db, object_db_rec_t *object_
   for(i = 0; i< parent_obj_rec->units; i++){
     parent_obj_ptr = (char*)(parent_obj_rec->ptr) + (i*parent_struct_rec->ds_size);
     for(n_fields = 0; n_fields< parent_struct_rec->n_fields; n_fields++){
-      field_info = &parent_struct_rec->fields(n_fields);
+      field_info = &parent_struct_rec->fields[n_fields];
       switch(field_info->dtype){
         case UINT8:
         case UINT32:
@@ -203,6 +203,7 @@ mld_explore_objects_recursively(object_db_t *object_db, object_db_rec_t *object_
         case DOUBLE:
         case OBJ_STRUCT:
           break;
+        case VOID_PTR:
         default:
           ;
         child_obj_offset = parent_obj_ptr + field_info->offset;
@@ -221,6 +222,18 @@ mld_explore_objects_recursively(object_db_t *object_db, object_db_rec_t *object_
       }
     }
   }
+}
+
+static object_db_rec_t *
+get_next_root_object(object_db_t *object_db, object_db_rec_t *starting_from_here){
+
+    object_db_rec_t *first = starting_from_here ? starting_from_here->next : object_db->head;
+    while(first){
+        if(first->is_root)
+            return first;
+        first = first->next;
+    }
+    return NULL;
 }
 
 void
@@ -244,4 +257,66 @@ run_mld_algorithm(object_db_t *object_db){
     mld_explore_objects_recursively(object_db, root_obj);
     root_obj = get_next_root_object(object_db, root_obj);
   }
+}
+
+static void
+mld_dump_object_rec_detail(object_db_rec_t *obj_rec){
+
+    int n_fields = obj_rec->struct_rec->n_fields;
+    field_info_t *field = NULL;
+
+    int units = obj_rec->units, obj_index = 0,
+        field_index = 0;
+
+    for(; obj_index < units; obj_index++){
+        char *current_object_ptr = (char *)(obj_rec->ptr) + \
+                        (obj_index * obj_rec->struct_rec->ds_size);
+
+        for(field_index = 0; field_index < n_fields; field_index++){
+
+            field = &obj_rec->struct_rec->fields[field_index];
+
+            switch(field->dtype){
+                case UINT8:
+                case INT32:
+                case UINT32:
+                    printf("%s[%d]->%s = %d\n", obj_rec->struct_rec->struct_name, obj_index, field->fname, *(int *)(current_object_ptr + field->offset));
+                    break;
+                case CHAR:
+                    printf("%s[%d]->%s = %s\n", obj_rec->struct_rec->struct_name, obj_index, field->fname, (char *)(current_object_ptr + field->offset));
+                    break;
+                case FLOAT:
+                    printf("%s[%d]->%s = %f\n", obj_rec->struct_rec->struct_name, obj_index, field->fname, *(float *)(current_object_ptr + field->offset));
+                    break;
+                case DOUBLE:
+                    printf("%s[%d]->%s = %f\n", obj_rec->struct_rec->struct_name, obj_index, field->fname, *(double *)(current_object_ptr + field->offset));
+                    break;
+                case OBJ_PTR:
+                    printf("%s[%d]->%s = %p\n", obj_rec->struct_rec->struct_name, obj_index, field->fname,  (void *)*(int *)(current_object_ptr + field->offset));
+                    break;
+                case OBJ_STRUCT:
+                    /*Later*/
+                    break;
+                default:
+                    break;
+            }
+        }
+    }
+}
+
+void
+report_leaked_objects(object_db_t *object_db){
+
+    int i = 0;
+    object_db_rec_t *head;
+
+    printf("Dumping Leaked Objects\n");
+
+    for(head = object_db->head; head; head = head->next){
+        if(!head->is_visited){
+            print_object_rec(head, i++);
+            mld_dump_object_rec_detail(head);
+            printf("\n\n");
+        }
+    }
 }

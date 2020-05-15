@@ -14,7 +14,8 @@ typedef enum{
   OBJ_PTR,
   FLOAT,
   DOUBLE,
-  OBJ_STRUCT
+  OBJ_STRUCT,
+  VOID_PTR
 }data_type_t;
 
 typedef enum{
