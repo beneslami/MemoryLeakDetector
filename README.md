@@ -190,4 +190,64 @@ At the end, when the algorithm finishes probing is_root, any object with is_visi
 Some Analysis:
 1. MLD algorithm is recursive.
 2. MLD algorithm is basically DFS algorithm. So basically, MLD algorithm is nothing but DFS.
-3. is_visited flag is used to avoid loops. 
+3. is_visited flag is used to avoid loops.
+
+---
+
+### shortcomings and drawbacks
+
+It will be easy to create a C/C++ application to fool MLD library. Basically, C is not OO based language, but Java on the other hand is. So, it would be more clean for java like languages to create a full MLD. There are some cases which are considered MLD's bugs:
+1. Storing the pointer to non-pointer data types. At the end of the day, pointer are numerical numbers which represent the address in process virtual address space, and therefore can always be stored in unsigned int variable.
+```
+struct emp_t{
+  char name[32];
+  unsigned int designation;
+};
+
+struct des_t{
+  char name[32];
+  int job_code;
+  int salary;
+};
+...
+...
+struct emp_t *emp = xcalloc(...);
+struct des_t *des = xcalloc(...);
+
+emp->designation = (unsigned int)des; // Storing the pointer to non-pointer data type.
+```
+The MLD library will report it as a leak which is false alarm but Java does not allow it to assign. During registration, MLD library will not find any OBJ_PTR in emp_t's data elements.
+2. Indirect reference to objects. This happens when one pointer points to memory location not returned by calloc.
+```
+struct emp_t{
+  char name[32];
+  struct list_node_t *node;
+};
+
+struct des_t{
+  char name[32];
+  int job_code;
+  emp_t *hod;
+  struct list_node_t node;
+};
+...
+...
+struct emp_t *emp = xcalloc(...);
+struct des_t *des = xcalloc(...);
+
+emp->node = &des->node;
+```
+3. Embedded Objects.
+```
+struct des_t{
+  char name[32];
+  int job_code;
+  emp_t *hod; /* this is not considered embedded as it is a reference */
+  struct list_node_t node; /* this is embedded data structure and after mallocing, it will be embedded object */
+};
+```
+4. MLD is unable to handle unions. Because unions do not have fixed size. Size of the union is the size of largest structure under union. There is no unions in Java.
+
+All in all, if we write a C/C++ program following pure object oriented notion as in case of Java, then MLD library will be just like Java Garbage Collector. But doing so places so many constraint on programmer to use C/C++. These languages provide developer to harness the direct access to memory address, whereas java does not. So, why not make use of it?
+
+C has not been designed to be used in object oriented way. Note that, developing a non object oriented software in object oriented way is disastrous. OOP is not always great!
