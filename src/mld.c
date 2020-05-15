@@ -167,3 +167,81 @@ mld_set_dynamic_object_as_root(object_db_t *object_db, void *obj_ptr){
   assert(obj_rec);
   obj_rec->is_root = MLD_TRUE;
 }
+
+static   void
+init_mld_algorithm(object_db_t *object_db){
+  object_db_rec_t *obj_rec = object_db->head;
+  while(obj_rec){
+    obj_rec->is_visited = MLD_FALSE;
+    obj_rec = obj_rec->next;
+  }
+}
+
+static void
+mld_explore_objects_recursively(object_db_t *object_db, object_db_rec_t *object_db_rec){
+  unsigned int i, n_fields;
+  char *parent_obj_ptr = NULL,
+       *child_obj_offset = NULL;
+  void *child_object_address = NULL;
+  field_info_t *field_info = NULL;
+
+  object_db_rec_t *child_object_rec = NULL;
+  struct_db_rec_t *parent_struct_rec = parent_obj_rec->struct_rec;
+  assert(parent_obj_rec->is_visited);
+
+  for(i = 0; i< parent_obj_rec->units; i++){
+    parent_obj_ptr = (char*)(parent_obj_rec->ptr) + (i*parent_struct_rec->ds_size);
+    for(n_fields = 0; n_fields< parent_struct_rec->n_fields; n_fields++){
+      field_info = &parent_struct_rec->fields(n_fields);
+      switch(field_info->dtype){
+        case UINT8:
+        case UINT32:
+        case INT32:
+        case CHAR:
+        case OBJ_PTR:
+        case FLOAT:
+        case DOUBLE:
+        case OBJ_STRUCT:
+          break;
+        default:
+          ;
+        child_obj_offset = parent_obj_ptr + field_info->offset;
+        memcpy(&child_object_address, child_obj_offset, sizeof(void*));
+        if(!child_object_address) continue;
+        child_object_rec = object_db_look_up(object_db, child_object_address);
+        assert(child_object_rec);
+        if(!child_object_rec->is_visited){
+          child_object_rec->is_visited = MLD_TRUE;
+          if(field_info->dtype != VOID_PTR)
+            mld_explore_objects_recursively(object_db, child_object_rec);
+        }
+        else{
+          continue;
+        }
+      }
+    }
+  }
+}
+
+void
+run_mld_algorithm(object_db_t *object_db){
+  /* step 1: Mark all objects in object database as unvisited */
+  init_mld_algorithm(object_db);
+  /* step 2: Get the first root object from the object_db. it could be present anywhere in object_db.
+     so the computational complexity at worst case will be O(n). If there are multiple roots in object_db, the
+     algorithm returns the first one. We can start mld algorithm from any root object */
+  object_db_rec_t *root_obj = get_next_root_object(object_db, NULL);
+  while(root_obj){
+    if(root_obj->is_visited){
+      /* It means, all objects reachable from this root_obj has already been explored. No need to do it again. Else you will end
+      up ininfinite loop. Remember, application data structures are cyclic graphs. */
+      root_obj = get_next_root_object(object_db, root_obj);
+      continue;
+    }
+    /*root objets are always reachable since application holds the global variable to it.*/
+    root_obj->is_visited = MLD_TRUE;
+    /* explore all reachable objects from this root_obj recursively */
+    mld_explore_objects_recursively(object_db, root_obj);
+    root_obj = get_next_root_object(object_db, root_obj);
+  }
+}
