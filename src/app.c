@@ -15,7 +15,7 @@ typedef struct student_{
   unsigned int rollno;
   unsigned int age;
   float aggregate;
-  struct student_ *best_college;
+  struct student_ *best_colleague;
 }student_t;
 
 int
@@ -39,20 +39,49 @@ main(int argc, char **argv){
     FIELD_INFO(student_t, rollno, UINT32, 0),
     FIELD_INFO(student_t, age, UINT32, 0),
     FIELD_INFO(student_t, aggregate, FLOAT, 0),
-    FIELD_INFO(student_t, best_college, OBJ_PTR, student_t)
+    FIELD_INFO(student_t, best_colleague, OBJ_PTR, student_t)
   };
   REG_STRUCT(struct_db, student_t, std_fields);
 
-  print_structure_db(struct_db);
+  //print_structure_db(struct_db);
 
   /* initialize a new object database */
   object_db_t *object_db = calloc(1, sizeof(object_db_t));
   object_db->struct_db = struct_db;
 
-  student_t *ben = xcalloc(object_db, "student_t", 1);
-  student_t *eslami = xcalloc(object_db, "student_t", 1);
-  student_t *pramod = xcalloc(object_db, "emp_t", 2);
+  student_t *ben = xcalloc(object_db, "student_t", 1); //root object
+  strncpy(ben->std_name, "benben", strlen("benben"));
+  ben->rollno = 12345;
+  ben->age = 27;
+  ben->aggregate = 12.24;
+  ben->best_colleague = xcalloc(object_db, "student_t", 1); //Forth Object
+  strncpy(ben->best_colleague->std_name, "Michio Honda", strlen("Michio Honda"));
+  ben->best_colleague->rollno = 54321;
+  ben->best_colleague->age = 32;
+  ben->best_colleague->aggregate = 30.12;
+  mld_set_dynamic_object_as_root(object_db, ben);
 
-  print_structure_db(struct_db);
+  student_t *eslami = xcalloc(object_db, "student_t", 1);  // Third object
+  strncpy(eslami->std_name, "Benyamin", strlen("Benyamin"));
+  eslami->rollno = 9876;
+  eslami->age = 72;
+  eslami->aggregate = 99.9;
+
+  emp_t *pramod = xcalloc(object_db, "emp_t", 2);  // second object
+  strncpy(pramod->emp_name, "Pramod", strlen("Pramod"));
+  pramod->emp_id = 123;
+  pramod->age = 40;
+  pramod->salary = 1000.1;
+  pramod->mgr = xcalloc(object_db, "emp_t", 1);  // first object
+  strncpy(pramod->mgr->emp_name, "Benji", strlen("Benji"));
+
+  xfree(object_db, pramod->mgr);
+  xfree(object_db, pramod);
+  xfree(object_db, eslami);
+  xfree(object_db, ben->best_colleague);
+
+  //print_object_db(object_db);
+  run_mld_algorithm(object_db);
+  report_leaked_objects(object_db);
   return 0;
 }
