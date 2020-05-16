@@ -16,6 +16,7 @@ typedef struct student_{
   unsigned int age;
   float aggregate;
   struct student_ *best_colleague;
+  int *p;
 }student_t;
 
 int
@@ -23,6 +24,7 @@ main(int argc, char **argv){
 
   /* Create new structure database*/
   struct_db_t *struct_db = calloc(1, sizeof(struct_db_t));
+  mld_init_primitive_data_types_support(struct_db);
 
   /* Create structure record for structure emp_t */
   static field_info_t emp_fields[] = {
@@ -59,6 +61,8 @@ main(int argc, char **argv){
   ben->best_colleague->rollno = 54321;
   ben->best_colleague->age = 32;
   ben->best_colleague->aggregate = 30.12;
+  ben->p = xcalloc(object_db, "int", 1); // testing primitive data type
+  *(ben->p) = 10;
   mld_set_dynamic_object_as_root(object_db, ben);
 
   student_t *eslami = xcalloc(object_db, "student_t", 1);  // Third object
@@ -79,7 +83,7 @@ main(int argc, char **argv){
   xfree(object_db, pramod);
   xfree(object_db, eslami);
   xfree(object_db, ben->best_colleague);
-
+  xfree(object_db, ben->p);
   //print_object_db(object_db);
   run_mld_algorithm(object_db);
   report_leaked_objects(object_db);
