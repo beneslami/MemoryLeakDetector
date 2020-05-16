@@ -13,8 +13,8 @@ But, in our project how the diagram is changed:
 MLD acts like a middle man between C application and OS/Kernel. All memory access via the application is passed to the OS/Kernel via MLD.
 
 The project development phase consists of several steps:
-1. MLD library will maintain the information about all structures which the application is using by creating structure database.
-2. MLD library will maintain the information about all objects malloc'd by the application by creating object database.
+1. MLD library will maintain the information about all structures which the application is using by creating **structure database**.
+2. MLD library will maintain the information about all objects malloc'd by the application by creating **object database**.
 3. MLD library triggers Memory Leak Detection Algorithm on Object database to find leaked objects.
 
 ![picture](data/projectdevelopmentphase.png)
@@ -106,7 +106,7 @@ The piece of code to specify all variables' offset is as below:
 
 ### Phase 2
 
-Phase 2 is about design and implementation of Object database. MLD library also know about all objects the application has malloc'd. So, the application must report MLD all its malloc'd objects. Whenever the application malloc a new object, MLD library will store the relevant information about this object such as corresponding structure details of the object and address of the object. Now, MLD maintains another database called Object Database and each data it holds is called object record.
+Phase 2 is about design and implementation of Object database. MLD library also knows about all objects the application has malloc'd. So, the application must report MLD all its malloc'd objects. Whenever the application malloc a new object, MLD library will store the relevant information about this object such as corresponding structure details of the object and address of the object. Now, MLD maintains another database called Object Database and each data it holds is called object record.
 
 ```
 typedef struct _object_db_rec_{
@@ -114,7 +114,9 @@ typedef struct _object_db_rec_{
   void *ptr; /*Key*/
   unsigned int units;
   strcut_db_rec_t *struct_rec;
-}strcut_db_rec_t;
+  mld_boolean_t is_root; /* Is this object root or not */
+  mld_boolean_t is_visited; /* used for Graph traversal */
+}object_db_rec_t;
 ```
 ```
 typedef struct _object_db_{
@@ -163,6 +165,7 @@ void mld_register_global_object_as_root(object_db_t *object_db, void *objptr,
 char *struct_name, unsigned int units);
 ```
 The objective of this function is to create a new object db record entry in object db of MLD library and mark it as root.
+
 2. Using dynamic object creation but after that, the application should search to find the object in object_db and mark it as a root.
 ```
 mld_set_dynamic_object_as_root(object_db_t *object_db, void *obj_ptr);
