@@ -113,5 +113,6 @@ void
 report_leaked_objects(object_db_t*);
 void
 xfree(object_db_t*, void*);
-
+void
+mld_init_primitive_data_types_support(struct_db_t*);  // handling pointer to primitive data types 
 #endif

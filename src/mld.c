@@ -233,6 +233,10 @@ mld_explore_objects_recursively(object_db_t *object_db, object_db_rec_t *parent_
   struct_db_rec_t *parent_struct_rec = parent_obj_rec->struct_rec;
   assert(parent_obj_rec->is_visited);
 
+  if(parent_struct_rec->n_fields == 0){
+    return;
+  }
+
   for(i = 0; i< parent_obj_rec->units; i++){
     parent_obj_ptr = (char*)(parent_obj_rec->ptr) + (i*parent_struct_rec->ds_size);
     for(n_fields = 0; n_fields< parent_struct_rec->n_fields; n_fields++){
@@ -335,7 +339,7 @@ mld_dump_object_rec_detail(object_db_rec_t *obj_rec){
                     printf("%s[%d]->%s = %f\n", obj_rec->struct_rec->struct_name, obj_index, field->fname, *(double *)(current_object_ptr + field->offset));
                     break;
                 case OBJ_PTR:
-                    printf("%s[%d]->%s = %p\n", obj_rec->struct_rec->struct_name, obj_index, field->fname,  (void *)*(int *)(current_object_ptr + field->offset));
+                    printf("%s[%d]->%s = %p\n", obj_rec->struct_rec->struct_name, obj_index, field->fname,  (void *)(current_object_ptr + field->offset));
                     break;
                 case OBJ_STRUCT:
                     /*Later*/
@@ -362,4 +366,11 @@ report_leaked_objects(object_db_t *object_db){
             printf("\n\n");
         }
     }
+}
+
+void
+mld_init_primitive_data_types_support(struct_db_t *struct_db){
+  REG_STRUCT(struct_db, int, 0);
+  REG_STRUCT(struct_db, float, 0);
+  REG_STRUCT(struct_db, double, 0);
 }
