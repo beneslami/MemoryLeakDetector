@@ -23,12 +23,6 @@ typedef enum{
   MLD_TRUE
 }mld_boolean_t;
 
-#define OFFSETOF(struct_name, fld_name) \
-        (unsigned int)&(((struct_name*)0)->fld_name)   /* NULL pointer of type struct_name */
-
-#define FIELD_SIZE(struct_name, fld_name) \
-        sizeof(((struct_name*)0)->fld_name)            /* NULL pointer of type struct_name */
-
 typedef struct _struct_db_rec_t struct_db_rec_t;
 
 /* structure database */
@@ -37,7 +31,7 @@ typedef struct _field_info_{
   data_type_t dtype;
   unsigned int size;
   unsigned int offset;
-  char nested_str_name[MAX_STRUCTURE_NAME_SIZE]; // Below field is meaningful only if dtype = OBJ_PTR, or OBJ_STRUCT
+  char nested_str_name[MAX_STRUCTURE_NAME_SIZE]; // This field is meaningful only if dtype = OBJ_PTR, or OBJ_STRUCT
 } field_info_t;
 
 /* Structure to store the information of one C Structure
@@ -64,7 +58,12 @@ print_structure_db(struct_db_t*);
 int
 add_structure_to_struct_db(struct_db_t*, struct_db_rec_t*);
 
-/*Structure registration helping APIs */
+/* General Macros */
+#define OFFSETOF(struct_name, fld_name) \
+        (unsigned int)&(((struct_name*)0)->fld_name)   /* NULL pointer of type struct_name */
+#define FIELD_SIZE(struct_name, fld_name) \
+        sizeof(((struct_name*)0)->fld_name)            /* NULL pointer of type struct_name */
+/* Structure registration helping APIs */
 #define FIELD_INFO(struct_name, fld_name, dtype, nested_str_name)     \
   {#fld_name, dtype, FIELD_SIZE(struct_name, fld_name),               \
     OFFSETOF(struct_name, fld_name), #nested_str_name}
@@ -85,7 +84,7 @@ add_structure_to_struct_db(struct_db_t*, struct_db_rec_t*);
 typedef struct _object_db_rec_ object_db_rec_t;
 struct _object_db_rec_{
   object_db_rec_t *next;
-  void *ptr;
+  void *ptr; /* key */
   unsigned int units;
   struct_db_rec_t *struct_rec;
   mld_boolean_t is_root; /* Is this object root or not */
@@ -98,20 +97,21 @@ typedef struct _object_db_{
 }object_db_t;
 
 /* APIs declaration */
+void*
+xcalloc(object_db_t *, char*, int);
 void
 print_object_rec(object_db_rec_t*, int);
 void
 print_object_db(object_db_t*);
-void*
-xcalloc(object_db_t *, char*, int);
-
 void
 mld_register_global_object_as_root(object_db_t*, void*, char*, unsigned int);
 void
-mld_register_global_object_as_root(object_db_t*, void*,char*, unsigned int);
+mld_set_dynamic_object_as_root(object_db_t*, void*);
 void
 run_mld_algorithm(object_db_t*);
 void
 report_leaked_objects(object_db_t*);
+void
+xfree(object_db_t*, void*);
 
 #endif

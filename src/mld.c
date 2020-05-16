@@ -137,6 +137,50 @@ xcalloc(object_db_t *object_db, char *struct_name, int units){
   return ptr;
 }
 
+static void
+delete_object_record_from_object_db(object_db_t *object_db, object_db_rec_t *object_rec){
+
+    assert(object_rec);
+
+    object_db_rec_t *head = object_db->head;
+    if(head == object_rec){
+        object_db->head = object_rec->next;
+        free(object_rec);
+        return;
+    }
+
+    object_db_rec_t *prev = head;
+    head = head->next;
+
+    while(head){
+        if(head != object_rec){
+            prev = head;
+            head = head->next;
+            continue;
+        }
+
+        prev->next = head->next;
+        head->next = NULL;
+        free(head);
+        return;
+    }
+}
+
+void
+xfree(object_db_t *object_db, void *ptr){
+
+    if(!ptr) return;
+    object_db_rec_t *object_rec =
+        object_db_look_up(object_db, ptr);
+
+    assert(object_rec);
+    assert(object_rec->ptr);
+    free(object_rec->ptr);
+    object_rec->ptr = NULL;
+    /*Delete object record from object db*/
+    delete_object_record_from_object_db(object_db, object_rec);
+}
+
 void
 print_object_rec(object_db_rec_t *obj_rec, int i){
   if(!obj_rec) return;
@@ -269,8 +313,7 @@ mld_dump_object_rec_detail(object_db_rec_t *obj_rec){
         field_index = 0;
 
     for(; obj_index < units; obj_index++){
-        char *current_object_ptr = (char *)(obj_rec->ptr) + \
-                        (obj_index * obj_rec->struct_rec->ds_size);
+        char *current_object_ptr = (char *)(obj_rec->ptr) + (obj_index * obj_rec->struct_rec->ds_size);
 
         for(field_index = 0; field_index < n_fields; field_index++){
 
