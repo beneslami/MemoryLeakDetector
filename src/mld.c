@@ -202,6 +202,7 @@ print_object_db(object_db_t *object_db){
 void
 mld_register_global_object_as_root(object_db_t *object_db, void *objptr, char *struct_name, unsigned int units){
   struct_db_rec_t *struct_rec = struct_db_look_up(object_db->struct_db, struct_name);
+  assert(struct_rec);
   add_object_to_object_db(object_db, objptr, units, struct_rec, MLD_TRUE);
 }
 
@@ -212,7 +213,7 @@ mld_set_dynamic_object_as_root(object_db_t *object_db, void *obj_ptr){
   obj_rec->is_root = MLD_TRUE;
 }
 
-static   void
+static void
 init_mld_algorithm(object_db_t *object_db){
   object_db_rec_t *obj_rec = object_db->head;
   while(obj_rec){
@@ -233,7 +234,7 @@ mld_explore_objects_recursively(object_db_t *object_db, object_db_rec_t *parent_
   struct_db_rec_t *parent_struct_rec = parent_obj_rec->struct_rec;
   assert(parent_obj_rec->is_visited);
 
-  if(parent_struct_rec->n_fields == 0){
+  if(parent_struct_rec->n_fields == 0){ /* optimization technique */ 
     return;
   }
 
