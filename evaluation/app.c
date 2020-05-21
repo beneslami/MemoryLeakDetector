@@ -56,7 +56,7 @@ main(int argc, char **argv){
   student_t *ben = xcalloc(object_db, "student_t", 1); //root object
   end = clock();
   sum += end - start;
-  printf("%ld\n", sum);
+
   strncpy(ben->std_name, "benben", strlen("benben"));
   ben->rollno = 12345;
   ben->age = 27;
@@ -80,7 +80,7 @@ main(int argc, char **argv){
   student_t *eslami = xcalloc(object_db, "student_t", 1);  // Third object
   end = clock();
   sum += end - start;
-  printf("%ld\n", sum);
+
   strncpy(eslami->std_name, "Benyamin", strlen("Benyamin"));
   eslami->rollno = 9876;
   eslami->age = 72;
@@ -90,7 +90,7 @@ main(int argc, char **argv){
   emp_t *pramod = xcalloc(object_db, "emp_t", 2);  // second object
   end = clock();
   sum += end - start;
-  printf("%ld\n", sum);
+
   strncpy(pramod->emp_name, "Pramod", strlen("Pramod"));
   pramod->emp_id = 123;
   pramod->age = 40;
@@ -111,10 +111,10 @@ main(int argc, char **argv){
   run_mld_algorithm(object_db);
   end = clock();
   sum+= end - start;
-  printf("%ld\n", sum);
-  //report_leaked_objects(object_db);
-  //FILE *f = fopen("output.txt", "ab");
-  //fprintf(f, "%ld\n", sum);
-  //fclose(f);
+  
+  report_leaked_objects(object_db);
+  FILE *f = fopen("output.txt", "ab");
+  fprintf(f, "%ld\n", sum);
+  fclose(f);
   return 0;
 }
